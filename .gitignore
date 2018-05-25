@@ -1,0 +1,6 @@
+.idea/
+vendor/
+cover.out
+dist/
+*.bak
+server
