@@ -1,0 +1,104 @@
+version: '3.3'
+services:
+
+  rproxy:
+    image: traefik:1.6.2-alpine
+    volumes:
+      - ./traefik.toml:/etc/traefik/traefik.toml:ro           # træfik static configuration
+      - /var/run/docker.sock:/var/run/docker.sock             # So that traefik can listen to the Docker events
+    ports:
+      - '443:443'                                             # https port
+      - '80:80'                                               # http port
+      - '8080:8080'                                           # for the træfik dashboard
+    labels:
+      - traefik.enable=false                                  # don't want to see træfik
+
+
+  apiv1:
+    image: emilevauge/whoami                                  # simple app to test the unsecured connection
+    expose:
+      - "80"
+    labels:
+      - traefik.frontend.rule=PathPrefix:/whoami
+      - traefik.port=80
+
+  etcd:
+    image: quay.io/coreos/etcd
+    command: etcd --initial-cluster-state new --listen-client-urls http://0.0.0.0:2379 --advertise-client-urls http://127.0.0.1:2379
+    volumes:
+      - "etcd-data:/default.etcd"
+    environment:
+      - ETCDCTL_API=3
+    labels:
+      - traefik.enable=false                                  # don't want to see træfik
+
+  etcd_config:
+    build:
+      context: .
+      dockerfile: ./Dockerfile-etcd-config
+    volumes:
+      - "etcd-data:/default.etcd"
+    environment:
+      - ETCDCTL_API=3
+      - ETCDCTL_ENDPOINTS=etcd:2379
+    depends_on:
+      - etcd
+    links:
+      - etcd
+    labels:
+      - traefik.enable=false                                  # don't want to see træfik
+
+  postgres:
+    image: "postgres"
+    volumes:
+      - "db-data:/var/lib/postgresql/data/pgdata"
+    environment:
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+      POSTGRES_USER: "go_oauth2_server"
+      POSTGRES_PASSWORD: ""
+      POSTGRES_DB: "go_oauth2_server"
+    labels:
+      - traefik.enable=false                                  # don't want to see træfik
+
+  app:
+    container_name: go_oauth2_server
+    image: go-oauth2-server:latest
+    labels:
+      - traefik.frontend.passHostHeader=true
+      - traefik.frontend.rule=PathPrefix:/web,/v1
+      - traefik.port=8080
+
+    depends_on:
+      - etcd_config
+      - postgres
+    links:
+      - etcd
+      - postgres
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      ETCD_ENDPOINTS: "http://etcd:2379"
+    command: [runserver]
+
+  app_testdata:
+    container_name: go_oauth2_server_testdata
+    image: go-oauth2-server:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      ETCD_ENDPOINTS: "http://etcd:2379"
+    depends_on:
+      - etcd_config
+      - postgres
+    links:
+      - etcd
+      - postgres
+    command: ["loaddata", "oauth/fixtures/test_clients.yml"]
+    labels:
+      - traefik.enable=false                                  # don't want to see træfik
+
+volumes:
+  etcd-data:
+  db-data:
