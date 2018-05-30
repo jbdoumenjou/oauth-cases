@@ -19,7 +19,7 @@ services:
     expose:
       - "80"
     labels:
-      - "traefik.frontend.rule=HeadersRegexp: Authorization: Bearer *"
+      - "traefik.frontend.rule=HeadersRegexp: Authorization, Bearer (.*)"
       - traefik.frontend.passHostHeader=true
       - traefik.port=80
 
@@ -67,7 +67,6 @@ services:
     image: go-oauth2-server:latest
     labels:
       - traefik.frontend.passHostHeader=true
-      - traefik.frontend.rule=Host:localhost
       - traefik.frontend.rule=PathPrefix:/web,/v1
       - traefik.port=8080
 
