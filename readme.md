@@ -2,15 +2,18 @@ This is a simple project to test the interaction between træfik and a OAuth2 se
 
 # Goal
 
+Test some configuration and try to interact with an OAuth server
 
-# Use case
+# OAuth Flows
 
-Launch the docker compose
+## Start the Stack
+
+Launch the docker compose from the project root
 ```bash
 docker-compose up
 ```
 
-## Authorization Code
+## Authorization Code Flow
 
 * Allow the action and get the associated code
 ```
@@ -28,7 +31,7 @@ https://localhost/whoami?code=e3b83d29-e55e-4f63-9519-0efce7765692&state=somesta
 curl -L -k --post302 --compressed -v localhost/v1/oauth/tokens \
     -u test_client_1:test_secret \
     -d "grant_type=authorization_code" \
-    -d "code=b6191b52-1eeb-40f0-81f8-574ab1c3f81d" \
+    -d "code=46e02fb5-95e1-4b4f-8292-2ec73b79a926" \
     -d "redirect_uri=https://localhost/whoami"
 
 ```
@@ -45,7 +48,7 @@ Example of result:
 
 ```
 
-## Implicit
+## Implicit Flow
 
 * Get the token from the first call
 ```
