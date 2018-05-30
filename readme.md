@@ -1,4 +1,4 @@
-This is a simple project to test the interaction between træfik and a OAuth2 server.
+This is a simple project to test the interaction between træfik and a OAuth2 server (https://github.com/RichardKnop/go-oauth2-server).
 
 # Goal
 
@@ -10,7 +10,7 @@ Test some configuration and try to interact with an OAuth server
 
 Launch the docker compose from the project root
 ```bash
-docker-compose up
+docker-compose up -d
 ```
 
 ## Authorization Code Flow
@@ -31,7 +31,7 @@ https://localhost/whoami?code=e3b83d29-e55e-4f63-9519-0efce7765692&state=somesta
 curl -L -k --post302 --compressed -v localhost/v1/oauth/tokens \
     -u test_client_1:test_secret \
     -d "grant_type=authorization_code" \
-    -d "code=46e02fb5-95e1-4b4f-8292-2ec73b79a926" \
+    -d "code=35464b33-f364-4ef0-8563-63bce8d15f0f" \
     -d "redirect_uri=https://localhost/whoami"
 
 ```
@@ -83,16 +83,8 @@ curl -L -k --post302 --compressed -v localhost/v1/oauth/tokens \
 ```
 
 ```bash
-curl -L -k --post302 --compressed -v -X POST localhost/v1/oauth/userinfo \
-    -H "Authorization: Bearer a775b95b-1aad-4808-b80d-a285aaadc59f"
-
-```
-
 curl -L -k --post302 --compressed -v localhost/v1/oauth/introspect \
 	-u test_client_1:test_secret \
-	-d "token=b59d2bc4-1fd6-43b4-b72f-b6172446ee34" \
+	-d "token=a775b95b-1aad-4808-b80d-a285aaadc59f" \
 	-d "token_type_hint=access_token"
-
-# References
-
-* OAuth server: https://github.com/RichardKnop/go-oauth2-server
+```
