@@ -11,17 +11,19 @@ services:
       - '80:80'                                               # http port
       - '8080:8080'                                           # for the træfik dashboard
     labels:
-      - traefik.enable=false                                  # don't want to see træfik
+      - traefik.enable=false
 
 
   apiv1:
-    image: emilevauge/whoami                                  # simple app to test the unsecured connection
+    image: emilevauge/whoami
     expose:
       - "80"
     labels:
-      - traefik.frontend.rule=PathPrefix:/whoami
+      - "traefik.frontend.rule=HeadersRegexp: Authorization: Bearer *"
+      - traefik.frontend.passHostHeader=true
       - traefik.port=80
 
+# created from the docker-compose https://github.com/RichardKnop/go-oauth2-server
   etcd:
     image: quay.io/coreos/etcd
     command: etcd --initial-cluster-state new --listen-client-urls http://0.0.0.0:2379 --advertise-client-urls http://127.0.0.1:2379
@@ -30,7 +32,7 @@ services:
     environment:
       - ETCDCTL_API=3
     labels:
-      - traefik.enable=false                                  # don't want to see træfik
+      - traefik.enable=false
 
   etcd_config:
     build:
@@ -46,7 +48,7 @@ services:
     links:
       - etcd
     labels:
-      - traefik.enable=false                                  # don't want to see træfik
+      - traefik.enable=false
 
   postgres:
     image: "postgres"
@@ -58,13 +60,14 @@ services:
       POSTGRES_PASSWORD: ""
       POSTGRES_DB: "go_oauth2_server"
     labels:
-      - traefik.enable=false                                  # don't want to see træfik
+      - traefik.enable=false
 
   app:
     container_name: go_oauth2_server
     image: go-oauth2-server:latest
     labels:
       - traefik.frontend.passHostHeader=true
+      - traefik.frontend.rule=Host:localhost
       - traefik.frontend.rule=PathPrefix:/web,/v1
       - traefik.port=8080
 
@@ -97,7 +100,7 @@ services:
       - postgres
     command: ["loaddata", "oauth/fixtures/test_clients.yml"]
     labels:
-      - traefik.enable=false                                  # don't want to see træfik
+      - traefik.enable=false
 
 volumes:
   etcd-data:
